@@ -1,0 +1,32 @@
+{
+    "schema": "1.0",
+    "type": "whmcs-addons",
+    "name": "telegram_notifications",
+    "license": "MIT",
+    "category": "notifications",
+    "description": {
+      "name": "Telegram Notifications",
+      "tagline": "Sends notifications to a Telegram channel based on various WHMCS events.",
+      "long": "Telegram Notifications is a WHMCS addon that allows you to send real-time notifications to a specified Telegram channel or group for various events occurring in your WHMCS installation. This addon is highly configurable and easy to set up.",
+      "features": [
+        "Send notifications for new client registrations.",
+        "Send notifications when an invoice is paid.",
+        "Send notifications when a new support ticket is opened.",
+        "Send notifications when a user replies to a support ticket.",
+        "Easy configuration through the WHMCS admin panel."
+      ]
+    },
+    "logo": {
+      "filename": "logo.png"
+    },
+    "support": {
+      "homepage": "https:\/\/github.com\/Nikba-Creative-Studio\/WHMCS-Gateway-Fees-Addon"
+    },
+    "authors": [
+      {
+        "name": "Nikba Creative Studio",
+        "homepage": "https:\/\/www.nikba.com\/"
+      }
+    ]
+  }
+  
