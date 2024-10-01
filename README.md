@@ -2,6 +2,8 @@
 
 **Telegram Notifications** is a WHMCS addon that allows you to send real-time notifications to a specified Telegram channel or group for various events occurring in your WHMCS installation. This addon is highly configurable and easy to set up.
 
+## You like this module? [Buy me a Coffee](https://buymeacoffee.com/nikba) ☕︎
+
 ## Features
 
 - Send notifications for new client registrations.
