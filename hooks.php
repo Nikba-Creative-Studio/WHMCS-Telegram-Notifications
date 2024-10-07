@@ -34,13 +34,28 @@ add_hook('InvoicePaid', 1, function($vars) {
 
 // Hook to send a notification when a new ticket is opened
 add_hook('TicketOpen', 1, function($vars) {
-    $clientDetails = localAPI('GetClientsDetails', ['clientid' => $vars['userid']]);
+    // Check if the ticket is opened by a registered user
+    if (!empty($vars['userid']) && $vars['userid'] != 0) {
+        // If the ticket is opened by a registered user, get the client details
+        $clientDetails = localAPI('GetClientsDetails', ['clientid' => $vars['userid']]);
+        $name = $clientDetails['fullname'];
+    } else {
+        // If the ticket is opened by a guest, use the contact name
+        // Get ticketid info from localAPI
+        $ticketid = $vars['ticketid'];
+        $ticketDetails = localAPI('GetTicket', ['ticketid' => $ticketid]);
+        $name = !empty($ticketDetails['name']) ? $ticketDetails['name'] . '🥷' : 'Guest';
+        
+    }
+
     $ticketDetails = [
         'id' => $vars['ticketid'],
         'userid' => $vars['userid'],
-        'name' => $clientDetails['fullname'],
+        'name' => $name,
         'subject' => $vars['subject'],
     ];
+
+    // Trimite notificarea în Telegram
     telegram_notify('TicketOpen', $ticketDetails);
 });
 
