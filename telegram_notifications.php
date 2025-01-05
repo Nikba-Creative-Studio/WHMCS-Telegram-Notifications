@@ -4,16 +4,56 @@ use WHMCS\Config\Setting;
 // Function to send a message to the Telegram bot
 if (!function_exists('telegram_notify')) {
     function telegram_notify($type, $data) {
-        // Retrieve settings from the addon configuration
-        $botToken = get_query_val('tbladdonmodules', 'value', ['module' => 'telegram_notifications', 'setting' => 'bot_token']);
-        $chatID = get_query_val('tbladdonmodules', 'value', ['module' => 'telegram_notifications', 'setting' => 'chat_id']);
-        
         // Check if the notification type is enabled in the settings
-        $isEnabled = get_query_val('tbladdonmodules', 'value', ['module' => 'telegram_notifications', 'setting' => $type]);
-        
+        $isEnabled = get_query_val('tbladdonmodules', 'value', [
+            'module' => 'telegram_notifications',
+            'setting' => $type,
+        ]);
+
         if ($isEnabled) {
+            // Retrieve settings from the addon configuration
+            $botToken = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'bot_token',
+            ]);
+            $chatID = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'chat_id',
+            ]);
+
+            // Retrieve proxy settings from the addon configuration
+            $proxyType = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'proxyType',
+            ]);
+            $proxyHost = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'proxyHost',
+            ]);
+            $proxyPort = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'proxyPort',
+            ]);
+            $proxyUsername = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'proxyUsername',
+            ]);
+            $proxyPassword = get_query_val('tbladdonmodules', 'value', [
+                'module' => 'telegram_notifications',
+                'setting' => 'proxyPassword',
+            ]);
+
+            // build message
             $message = build_message($type, $data);
-            send_telegram_message($botToken, $chatID, $message);
+
+            // send message
+            send_telegram_message($botToken, $chatID, $message, [
+                'proxyType' => $proxyType,
+                'proxyHost' => $proxyHost,
+                'proxyPort' => $proxyPort,
+                'proxyUsername' => $proxyUsername,
+                'proxyPassword' => $proxyPassword,
+            ]);
         }
     }
 }
@@ -63,7 +103,7 @@ if (!function_exists('build_message')) {
 
 // Function to send a message via the Telegram API
 if (!function_exists('send_telegram_message')) {
-    function send_telegram_message($botToken, $chatID, $message) {
+    function send_telegram_message($botToken, $chatID, $message, $proxySettings = []) {
         $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
         $data = [
             'chat_id' => $chatID,
@@ -78,7 +118,28 @@ if (!function_exists('send_telegram_message')) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+        if (!empty($proxySettings) && isset($proxySettings['proxyType']) && $proxySettings['proxyType'] !== 'None') {
+            $proxyHost = $proxySettings['proxyHost'] ?? '';
+            $proxyPort = $proxySettings['proxyPort'] ?? '';
+            $proxyUsername = $proxySettings['proxyUsername'] ?? '';
+            $proxyPassword = $proxySettings['proxyPassword'] ?? '';
+    
+            if (!empty($proxyHost) && !empty($proxyPort)) {
+                $proxy = "{$proxySettings['proxyType']}://{$proxyHost}:{$proxyPort}";
+                curl_setopt($ch, CURLOPT_PROXY, $proxy);
+    
+                if (!empty($proxyUsername) && !empty($proxyPassword)) {
+                    $proxyAuth = "{$proxyUsername}:{$proxyPassword}";
+                    curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxyAuth);
+                }
+            }
+        }
+    
         $response = curl_exec($ch);
+
+        if(!$response){
+            $response = curl_error($ch);
+        }
         curl_close($ch);
 
         // Optionally, you can log the response for debugging
@@ -128,6 +189,45 @@ if (!function_exists('telegram_notifications_config')) {
                     "FriendlyName" => "Notify on Ticket Reply",
                     "Type" => "yesno",
                     "Description" => "Send notification when a user replies to a ticket.",
+                ],
+                "proxyType" => [
+                    'FriendlyName' => 'Proxy Type',
+                    'Type' => 'dropdown',
+                    'Options' => 'None,http,https,socks5,socks5h',
+                    'Description' => 'Select the type of proxy to use, or choose "None" to disable proxy.',
+                    'Default' => 'None',
+                    ],
+                "proxyHost" => [
+                    'name' => 'proxyHost',
+                    'FriendlyName' => 'Proxy Host',
+                    'Type' => 'text',
+                    'Size' => '50',
+                    'Description' => 'Enter the proxy host (IP or domain). Leave empty if proxy is disabled.',
+                    'Default' => '',
+                ],
+                "proxyPort" => [
+                    'name' => 'proxyPort',
+                    'FriendlyName' => 'Proxy Port',
+                    'Type' => 'text',
+                    'Size' => '10',
+                    'Description' => 'Enter the proxy port number. Leave empty if proxy is disabled.',
+                    'Default' => '',
+                ],
+                "proxyUsername" => [
+                    'name' => 'proxyUsername',
+                    'FriendlyName' => 'Proxy Username',
+                    'Type' => 'text',
+                    'Size' => '50',
+                    'Description' => 'Enter the proxy username (if required). Leave empty if proxy is disabled.',
+                    'Default' => '',
+                ],
+                "proxyPassword" => [
+                    'name' => 'proxyPassword',
+                    'FriendlyName' => 'Proxy Password',
+                    'Type' => 'password',
+                    'Size' => '50',
+                    'Description' => 'Enter the proxy password (if required). Leave empty if proxy is disabled.',
+                    'Default' => '',
                 ],
             ],
         ];
